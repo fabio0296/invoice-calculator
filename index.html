@@ -90,6 +90,16 @@
       transition: border-color 0.15s, box-shadow 0.15s;
     }
 
+    input[type="month"] {
+      color-scheme: dark;
+    }
+
+    /* Keep calendar icon white: no filter so dark theme icon stays light */
+    input[type="month"]::-webkit-calendar-picker-indicator {
+      opacity: 1;
+      cursor: pointer;
+    }
+
     input:focus,
     select:focus {
       outline: none;
@@ -110,6 +120,37 @@
       margin-bottom: 0;
     }
 
+    .input-currency {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input-currency:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.2);
+    }
+
+    .input-currency .prefix {
+      padding: 0.625rem 0 0.625rem 0.75rem;
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .input-currency input {
+      border: none;
+      background: transparent;
+      padding-left: 0.25rem;
+    }
+
+    .input-currency input:focus {
+      box-shadow: none;
+    }
+
     .workdays-badge {
       display: inline-block;
       margin-top: 0.5rem;
@@ -121,27 +162,53 @@
       border-radius: var(--radius-sm);
     }
 
-    .radio-group {
-      margin: 1rem 0;
+    .segmented-control {
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin: 0.5rem 0 0;
     }
 
-    .radio-option {
+    .segment {
+      flex: 1;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0;
+      justify-content: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
       cursor: pointer;
+      transition: background 0.15s, color 0.15s;
     }
 
-    .radio-option input {
-      width: auto;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    .radio-option span {
-      font-size: 0.9375rem;
+    .segment:hover {
       color: var(--text);
+    }
+
+    .segment input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    .segment:has(input:checked) {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .segment:has(input:checked):hover {
+      background: var(--accent-hover);
+      color: #fff;
     }
 
     .conditional-input {
@@ -172,15 +239,28 @@
       font-weight: 700;
       letter-spacing: -0.02em;
       color: var(--success);
+      margin-bottom: 1rem;
     }
 
-    .result-detail {
+    .result-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
       font-size: 0.8125rem;
-      color: var(--text-muted);
-      margin-top: 0.5rem;
     }
 
-    .result-detail strong {
+    .result-row .row-label {
+      color: var(--text-muted);
+    }
+
+    .result-row .row-value {
       color: var(--text);
       font-weight: 500;
     }
@@ -207,13 +287,16 @@
     <div class="card">
       <div class="field">
         <label for="monthly-rate">Monthly rate</label>
-        <input
-          type="text"
-          id="monthly-rate"
-          inputmode="numeric"
-          placeholder="e.g. 8000"
-          autocomplete="off"
-        />
+        <div class="input-currency">
+          <span class="prefix" aria-hidden="true">$</span>
+          <input
+            type="text"
+            id="monthly-rate"
+            inputmode="numeric"
+            placeholder="e.g. 8,000"
+            autocomplete="off"
+          />
+        </div>
       </div>
 
       <div class="field">
@@ -224,19 +307,21 @@
         </div>
       </div>
 
-      <div class="field radio-group">
-        <label>Calculation method</label>
-        <label class="radio-option">
-          <input type="radio" name="mode" value="worked" checked />
-          <span>By worked days</span>
-        </label>
-        <label class="radio-option">
-          <input type="radio" name="mode" value="timeoff" />
-          <span>By time off</span>
-        </label>
+      <div class="field">
+        <label id="calc-method-label">Calculation method</label>
+        <div class="segmented-control" role="group" aria-labelledby="calc-method-label">
+          <label class="segment">
+            <input type="radio" name="mode" value="timeoff" checked />
+            Time off
+          </label>
+          <label class="segment">
+            <input type="radio" name="mode" value="worked" />
+            By worked days
+          </label>
+        </div>
       </div>
 
-      <div id="worked-days-wrap" class="field conditional-input">
+      <div id="worked-days-wrap" class="field conditional-input hidden">
         <label for="worked-days">Worked days</label>
         <input
           type="number"
@@ -248,7 +333,7 @@
         />
       </div>
 
-      <div id="timeoff-wrap" class="field conditional-input hidden">
+      <div id="timeoff-wrap" class="field conditional-input">
         <label for="timeoff-days">Time off (days)</label>
         <input
           type="number"
@@ -263,8 +348,25 @@
 
     <div class="card result-box" id="result-box" aria-live="polite">
       <div class="label">Invoice amount</div>
-      <div class="value" id="result-value">—</div>
-      <div class="result-detail" id="result-detail"></div>
+      <div class="value" id="result-value">$ —</div>
+      <div class="result-rows">
+        <div class="result-row">
+          <span class="row-label">Month</span>
+          <span class="row-value" id="result-month">—</span>
+        </div>
+        <div class="result-row">
+          <span class="row-label">Worked days</span>
+          <span class="row-value" id="result-worked-days">—</span>
+        </div>
+        <div class="result-row">
+          <span class="row-label">Workdays of month</span>
+          <span class="row-value" id="result-workdays-month">—</span>
+        </div>
+        <div class="result-row">
+          <span class="row-label">Total</span>
+          <span class="row-value" id="result-total">$ —</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -279,10 +381,11 @@
       const workedDaysInput = document.getElementById("worked-days");
       const timeoffInput = document.getElementById("timeoff-days");
       const resultValueEl = document.getElementById("result-value");
-      const resultDetailEl = document.getElementById("result-detail");
-      const resultBox = document.getElementById("result-box");
+      const resultMonthEl = document.getElementById("result-month");
+      const resultWorkedDaysEl = document.getElementById("result-worked-days");
+      const resultWorkdaysMonthEl = document.getElementById("result-workdays-month");
+      const resultTotalEl = document.getElementById("result-total");
 
-      // Set default month to current
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -294,7 +397,7 @@
         let count = 0;
         const d = new Date(first);
         while (d <= last) {
-          const day = d.getDay();
+          const day = d.getDay(); /* 0=Sun, 1=Mon … 6=Sat; fixed by spec, not locale */
           if (day >= 1 && day <= 5) count++;
           d.setDate(d.getDate() + 1);
         }
@@ -309,9 +412,13 @@
       }
 
       function parseFormattedRate(str) {
-        const cleaned = String(str).replace(/,/g, "").trim();
+        const cleaned = String(str).replace(/,/g, "").replace(/\$/g, "").trim();
         const num = parseFloat(cleaned);
         return isNaN(num) ? null : num;
+      }
+
+      function formatCurrency(num) {
+        return "$ " + formatNumber(num);
       }
 
       function updateWorkdaysBadge() {
@@ -346,57 +453,57 @@
         return getWorkdaysInMonth(y, m);
       }
 
+      function formatMonthLabel(monthValue) {
+        if (!monthValue) return "—";
+        const [y, m] = monthValue.split("-").map(Number);
+        const d = new Date(y, m - 1, 1);
+        return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      }
+
+      function setResultRows(monthLabel, workedDays, workdaysMonth, total) {
+        resultMonthEl.textContent = monthLabel;
+        resultWorkedDaysEl.textContent = workedDays;
+        resultWorkdaysMonthEl.textContent = workdaysMonth;
+        resultTotalEl.textContent = total;
+      }
+
       function calculate() {
         const rate = parseFormattedRate(monthlyRateInput.value);
         const workdaysInMonth = getWorkdays();
         const mode = document.querySelector('input[name="mode"]:checked').value;
+        const monthLabel = formatMonthLabel(monthInput.value);
 
         if (rate == null || rate < 0 || workdaysInMonth == null || workdaysInMonth === 0) {
-          resultValueEl.textContent = "—";
-          resultDetailEl.textContent = "";
+          resultValueEl.textContent = "$ —";
+          setResultRows("—", "—", workdaysInMonth != null ? workdaysInMonth : "—", "$ —");
           return;
         }
 
         let amount = 0;
-        let detail = "";
+        let worked = 0;
 
         if (mode === "worked") {
-          const worked = parseFloat(workedDaysInput.value);
+          worked = parseFloat(workedDaysInput.value);
           if (isNaN(worked) || worked < 0) {
-            resultValueEl.textContent = "—";
-            resultDetailEl.textContent = "Enter worked days.";
+            resultValueEl.textContent = "$ —";
+            setResultRows(monthLabel, "—", workdaysInMonth, "$ —");
             return;
           }
-          amount = (rate / workdaysInMonth) * Math.min(worked, workdaysInMonth);
-          detail =
-            rate.toLocaleString("en-US", { maximumFractionDigits: 2 }) +
-            " ÷ " +
-            workdaysInMonth +
-            " × " +
-            worked +
-            " days = ";
+          worked = Math.min(worked, workdaysInMonth);
+          amount = (rate / workdaysInMonth) * worked;
         } else {
           const timeoff = parseFloat(timeoffInput.value);
           if (isNaN(timeoff) || timeoff < 0) {
-            resultValueEl.textContent = "—";
-            resultDetailEl.textContent = "Enter time off (days).";
+            resultValueEl.textContent = "$ —";
+            setResultRows(monthLabel, "—", workdaysInMonth, "$ —");
             return;
           }
-          const worked = Math.max(0, workdaysInMonth - timeoff);
+          worked = Math.max(0, workdaysInMonth - timeoff);
           amount = (rate / workdaysInMonth) * worked;
-          detail =
-            rate.toLocaleString("en-US", { maximumFractionDigits: 2 }) +
-            " ÷ " +
-            workdaysInMonth +
-            " × (" +
-            workdaysInMonth +
-            " − " +
-            timeoff +
-            ") = ";
         }
 
-        resultValueEl.textContent = formatNumber(amount);
-        resultDetailEl.innerHTML = "<strong>" + detail + formatNumber(amount) + "</strong>";
+        resultValueEl.textContent = formatCurrency(amount);
+        setResultRows(monthLabel, worked, workdaysInMonth, formatCurrency(amount));
       }
 
       function toggleMode() {
