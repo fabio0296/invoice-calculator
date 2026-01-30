@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1114;
+      --surface: #181b20;
+      --surface-elevated: #1f2329;
+      --border: #2d3239;
+      --text: #e8eaed;
+      --text-muted: #9aa0a8;
+      --accent: #5b8def;
+      --accent-hover: #7aa3f5;
+      --success: #34c759;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 1.75rem;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card:last-of-type {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.375rem;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="month"],
+    select {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.2);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    .field {
+      margin-bottom: 1.25rem;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .workdays-badge {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.375rem 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--accent);
+      background: rgba(91, 141, 239, 0.12);
+      border-radius: var(--radius-sm);
+    }
+
+    .radio-group {
+      margin: 1rem 0;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      cursor: pointer;
+    }
+
+    .radio-option input {
+      width: auto;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .radio-option span {
+      font-size: 0.9375rem;
+      color: var(--text);
+    }
+
+    .conditional-input {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .result-box {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .result-box .label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .result-box .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--success);
+    }
+
+    .result-detail {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    .result-detail strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (min-width: 480px) {
+      body {
+        padding: 3rem 1.5rem;
+      }
+
+      .container {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Invoice Calculator</h1>
+
+    <div class="card">
+      <div class="field">
+        <label for="monthly-rate">Monthly rate</label>
+        <input
+          type="text"
+          id="monthly-rate"
+          inputmode="numeric"
+          placeholder="e.g. 8000"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="field">
+        <label for="month">Month</label>
+        <input type="month" id="month" />
+        <div id="workdays-badge" class="workdays-badge hidden" aria-live="polite">
+          <span id="workdays-count">0</span> workdays (Mon–Fri)
+        </div>
+      </div>
+
+      <div class="field radio-group">
+        <label>Calculation method</label>
+        <label class="radio-option">
+          <input type="radio" name="mode" value="worked" checked />
+          <span>By worked days</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="mode" value="timeoff" />
+          <span>By time off</span>
+        </label>
+      </div>
+
+      <div id="worked-days-wrap" class="field conditional-input">
+        <label for="worked-days">Worked days</label>
+        <input
+          type="number"
+          id="worked-days"
+          min="0"
+          max="31"
+          step="1"
+          placeholder="Days worked"
+        />
+      </div>
+
+      <div id="timeoff-wrap" class="field conditional-input hidden">
+        <label for="timeoff-days">Time off (days)</label>
+        <input
+          type="number"
+          id="timeoff-days"
+          min="0"
+          max="31"
+          step="0.5"
+          placeholder="Days off"
+        />
+      </div>
+    </div>
+
+    <div class="card result-box" id="result-box" aria-live="polite">
+      <div class="label">Invoice amount</div>
+      <div class="value" id="result-value">—</div>
+      <div class="result-detail" id="result-detail"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const monthlyRateInput = document.getElementById("monthly-rate");
+      const monthInput = document.getElementById("month");
+      const workdaysBadge = document.getElementById("workdays-badge");
+      const workdaysCountEl = document.getElementById("workdays-count");
+      const workedDaysWrap = document.getElementById("worked-days-wrap");
+      const timeoffWrap = document.getElementById("timeoff-wrap");
+      const workedDaysInput = document.getElementById("worked-days");
+      const timeoffInput = document.getElementById("timeoff-days");
+      const resultValueEl = document.getElementById("result-value");
+      const resultDetailEl = document.getElementById("result-detail");
+      const resultBox = document.getElementById("result-box");
+
+      // Set default month to current
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      monthInput.value = `${year}-${month}`;
+
+      function getWorkdaysInMonth(year, month) {
+        const first = new Date(year, month - 1, 1);
+        const last = new Date(year, month, 0);
+        let count = 0;
+        const d = new Date(first);
+        while (d <= last) {
+          const day = d.getDay();
+          if (day >= 1 && day <= 5) count++;
+          d.setDate(d.getDate() + 1);
+        }
+        return count;
+      }
+
+      function formatNumber(num) {
+        return num.toLocaleString("en-US", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function parseFormattedRate(str) {
+        const cleaned = String(str).replace(/,/g, "").trim();
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? null : num;
+      }
+
+      function updateWorkdaysBadge() {
+        const val = monthInput.value;
+        if (!val) {
+          workdaysBadge.classList.add("hidden");
+          return;
+        }
+        const [y, m] = val.split("-").map(Number);
+        const count = getWorkdaysInMonth(y, m);
+        workdaysCountEl.textContent = count;
+        workdaysBadge.classList.remove("hidden");
+        return count;
+      }
+
+      function onMonthlyRateBlur() {
+        const num = parseFormattedRate(monthlyRateInput.value);
+        if (num !== null && num >= 0) {
+          monthlyRateInput.value = formatNumber(Math.round(num * 100) / 100);
+        }
+        calculate();
+      }
+
+      function onMonthlyRateInput() {
+        monthlyRateInput.value = monthlyRateInput.value.replace(/[^0-9.]/g, "");
+      }
+
+      function getWorkdays() {
+        const val = monthInput.value;
+        if (!val) return null;
+        const [y, m] = val.split("-").map(Number);
+        return getWorkdaysInMonth(y, m);
+      }
+
+      function calculate() {
+        const rate = parseFormattedRate(monthlyRateInput.value);
+        const workdaysInMonth = getWorkdays();
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+
+        if (rate == null || rate < 0 || workdaysInMonth == null || workdaysInMonth === 0) {
+          resultValueEl.textContent = "—";
+          resultDetailEl.textContent = "";
+          return;
+        }
+
+        let amount = 0;
+        let detail = "";
+
+        if (mode === "worked") {
+          const worked = parseFloat(workedDaysInput.value);
+          if (isNaN(worked) || worked < 0) {
+            resultValueEl.textContent = "—";
+            resultDetailEl.textContent = "Enter worked days.";
+            return;
+          }
+          amount = (rate / workdaysInMonth) * Math.min(worked, workdaysInMonth);
+          detail =
+            rate.toLocaleString("en-US", { maximumFractionDigits: 2 }) +
+            " ÷ " +
+            workdaysInMonth +
+            " × " +
+            worked +
+            " days = ";
+        } else {
+          const timeoff = parseFloat(timeoffInput.value);
+          if (isNaN(timeoff) || timeoff < 0) {
+            resultValueEl.textContent = "—";
+            resultDetailEl.textContent = "Enter time off (days).";
+            return;
+          }
+          const worked = Math.max(0, workdaysInMonth - timeoff);
+          amount = (rate / workdaysInMonth) * worked;
+          detail =
+            rate.toLocaleString("en-US", { maximumFractionDigits: 2 }) +
+            " ÷ " +
+            workdaysInMonth +
+            " × (" +
+            workdaysInMonth +
+            " − " +
+            timeoff +
+            ") = ";
+        }
+
+        resultValueEl.textContent = formatNumber(amount);
+        resultDetailEl.innerHTML = "<strong>" + detail + formatNumber(amount) + "</strong>";
+      }
+
+      function toggleMode() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        if (mode === "worked") {
+          workedDaysWrap.classList.remove("hidden");
+          timeoffWrap.classList.add("hidden");
+        } else {
+          workedDaysWrap.classList.add("hidden");
+          timeoffWrap.classList.remove("hidden");
+        }
+        calculate();
+      }
+
+      monthlyRateInput.addEventListener("blur", onMonthlyRateBlur);
+      monthlyRateInput.addEventListener("input", onMonthlyRateInput);
+      monthInput.addEventListener("change", function () {
+        updateWorkdaysBadge();
+        const workdays = getWorkdays();
+        if (workdays != null) {
+          workedDaysInput.max = workdays;
+          timeoffInput.max = workdays;
+        }
+        calculate();
+      });
+
+      document.querySelectorAll('input[name="mode"]').forEach(function (radio) {
+        radio.addEventListener("change", toggleMode);
+      });
+
+      workedDaysInput.addEventListener("input", calculate);
+      workedDaysInput.addEventListener("change", calculate);
+      timeoffInput.addEventListener("input", calculate);
+      timeoffInput.addEventListener("change", calculate);
+
+      updateWorkdaysBadge();
+      toggleMode();
+    })();
+  </script>
+</body>
+</html>
