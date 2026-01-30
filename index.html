@@ -355,6 +355,10 @@
           <span class="row-value" id="result-month">—</span>
         </div>
         <div class="result-row">
+          <span class="row-label">Monthly rate</span>
+          <span class="row-value" id="result-monthly-rate">—</span>
+        </div>
+        <div class="result-row">
           <span class="row-label">Worked days</span>
           <span class="row-value" id="result-worked-days">—</span>
         </div>
@@ -370,7 +374,15 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import {
+      eachDayOfInterval,
+      endOfMonth,
+      format,
+      isWeekend,
+      startOfMonth,
+    } from "https://esm.sh/date-fns@3";
+
     (function () {
       const monthlyRateInput = document.getElementById("monthly-rate");
       const monthInput = document.getElementById("month");
@@ -382,26 +394,18 @@
       const timeoffInput = document.getElementById("timeoff-days");
       const resultValueEl = document.getElementById("result-value");
       const resultMonthEl = document.getElementById("result-month");
+      const resultMonthlyRateEl = document.getElementById("result-monthly-rate");
       const resultWorkedDaysEl = document.getElementById("result-worked-days");
       const resultWorkdaysMonthEl = document.getElementById("result-workdays-month");
       const resultTotalEl = document.getElementById("result-total");
 
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      monthInput.value = `${year}-${month}`;
+      monthInput.value = format(new Date(), "yyyy-MM");
 
       function getWorkdaysInMonth(year, month) {
-        const first = new Date(year, month - 1, 1);
-        const last = new Date(year, month, 0);
-        let count = 0;
-        const d = new Date(first);
-        while (d <= last) {
-          const day = d.getDay(); /* 0=Sun, 1=Mon … 6=Sat; fixed by spec, not locale */
-          if (day >= 1 && day <= 5) count++;
-          d.setDate(d.getDate() + 1);
-        }
-        return count;
+        const start = startOfMonth(new Date(year, month - 1, 1));
+        const end = endOfMonth(start);
+        const days = eachDayOfInterval({ start, end });
+        return days.filter((d) => !isWeekend(d)).length;
       }
 
       function formatNumber(num) {
@@ -457,11 +461,12 @@
         if (!monthValue) return "—";
         const [y, m] = monthValue.split("-").map(Number);
         const d = new Date(y, m - 1, 1);
-        return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        return format(d, "MMMM yyyy");
       }
 
-      function setResultRows(monthLabel, workedDays, workdaysMonth, total) {
+      function setResultRows(monthLabel, monthlyRate, workedDays, workdaysMonth, total) {
         resultMonthEl.textContent = monthLabel;
+        resultMonthlyRateEl.textContent = monthlyRate;
         resultWorkedDaysEl.textContent = workedDays;
         resultWorkdaysMonthEl.textContent = workdaysMonth;
         resultTotalEl.textContent = total;
@@ -475,7 +480,7 @@
 
         if (rate == null || rate < 0 || workdaysInMonth == null || workdaysInMonth === 0) {
           resultValueEl.textContent = "$ —";
-          setResultRows("—", "—", workdaysInMonth != null ? workdaysInMonth : "—", "$ —");
+          setResultRows("—", "$ —", "—", workdaysInMonth != null ? workdaysInMonth : "—", "$ —");
           return;
         }
 
@@ -486,7 +491,7 @@
           worked = parseFloat(workedDaysInput.value);
           if (isNaN(worked) || worked < 0) {
             resultValueEl.textContent = "$ —";
-            setResultRows(monthLabel, "—", workdaysInMonth, "$ —");
+            setResultRows(monthLabel, formatCurrency(rate), "—", workdaysInMonth, "$ —");
             return;
           }
           worked = Math.min(worked, workdaysInMonth);
@@ -495,7 +500,7 @@
           const timeoff = parseFloat(timeoffInput.value);
           if (isNaN(timeoff) || timeoff < 0) {
             resultValueEl.textContent = "$ —";
-            setResultRows(monthLabel, "—", workdaysInMonth, "$ —");
+            setResultRows(monthLabel, formatCurrency(rate), "—", workdaysInMonth, "$ —");
             return;
           }
           worked = Math.max(0, workdaysInMonth - timeoff);
@@ -503,7 +508,7 @@
         }
 
         resultValueEl.textContent = formatCurrency(amount);
-        setResultRows(monthLabel, worked, workdaysInMonth, formatCurrency(amount));
+        setResultRows(monthLabel, formatCurrency(rate), worked, workdaysInMonth, formatCurrency(amount));
       }
 
       function toggleMode() {
