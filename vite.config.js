@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { ViteMinifyPlugin } from 'vite-plugin-minify';
 
 export default defineConfig({
+  base: './',
   build: {
     outDir: 'dist',
     minify: 'esbuild',
@@ -12,6 +13,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
       },
     },
+    assetInlineLimit: 100000000,
   },
   plugins: [
     ViteMinifyPlugin({
