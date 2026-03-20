@@ -15,7 +15,9 @@ Calculate your invoice by subtracting days you didn't work from the total workda
 **Formula:**
 ```
 worked_days = workdays_in_month - time_off_days
-invoice_amount = (monthly_rate / workdays_in_month) × worked_days
+base_amount = (monthly_rate / workdays_in_month) × worked_days
+hourly_rate = monthly_rate / workdays_in_month / 8
+invoice_amount = max(0, base_amount - (hourly_rate × hours_off))
 ```
 
 **Example:** If your monthly rate is $10,000 and the month has 22 workdays, taking 2 days off:
@@ -29,7 +31,9 @@ Calculate your invoice by directly entering the number of days you worked.
 
 **Formula:**
 ```
-invoice_amount = (monthly_rate / workdays_in_month) × worked_days
+base_amount = (monthly_rate / workdays_in_month) × worked_days
+hourly_rate = monthly_rate / workdays_in_month / 8
+invoice_amount = max(0, base_amount - (hourly_rate × hours_off))
 ```
 
 **Example:** If your monthly rate is $10,000 and the month has 22 workdays, working 18 days:
@@ -40,6 +44,8 @@ invoice_amount = (monthly_rate / workdays_in_month) × worked_days
 
 - **Automatic workday calculation**: Counts only weekdays (Monday–Friday) for any month
 - **Two calculation modes**: Choose between time off or worked days
+- **Hours off deduction**: Enter hours off in `0.5` increments (for example `0.5` for half an hour)
+- **Hourly rate visibility**: Shows calculated hourly rate in invoice details
 - **Real-time calculation**: Results update instantly as you type
 
 ## Usage
@@ -49,7 +55,8 @@ invoice_amount = (monthly_rate / workdays_in_month) × worked_days
 3. Choose your preferred calculation method:
    - **Time off**: Enter how many days you took off
    - **Worked days**: Enter how many days you worked
-4. The invoice amount is calculated automatically
+4. Enter **Hours off** (optional) to deduct by hourly rate
+5. The invoice amount is calculated automatically
 
 ## Development
 

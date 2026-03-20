@@ -344,6 +344,17 @@
           placeholder="Days off"
         />
       </div>
+
+      <div id="hours-off-wrap" class="field conditional-input">
+        <label for="hours-off">Hours off</label>
+        <input
+          type="number"
+          id="hours-off"
+          min="0"
+          step="0.5"
+          placeholder="Hours off (e.g. 1 or 0.5)"
+        />
+      </div>
     </div>
 
     <div class="card result-box" id="result-box" aria-live="polite">
@@ -357,6 +368,10 @@
         <div class="result-row">
           <span class="row-label">Monthly rate</span>
           <span class="row-value" id="result-monthly-rate">—</span>
+        </div>
+        <div class="result-row">
+          <span class="row-label">Hourly rate</span>
+          <span class="row-value" id="result-hourly-rate">—</span>
         </div>
         <div class="result-row">
           <span class="row-label">Worked days</span>
@@ -392,9 +407,11 @@
       const timeoffWrap = document.getElementById("timeoff-wrap");
       const workedDaysInput = document.getElementById("worked-days");
       const timeoffInput = document.getElementById("timeoff-days");
+      const hoursOffInput = document.getElementById("hours-off");
       const resultValueEl = document.getElementById("result-value");
       const resultMonthEl = document.getElementById("result-month");
       const resultMonthlyRateEl = document.getElementById("result-monthly-rate");
+      const resultHourlyRateEl = document.getElementById("result-hourly-rate");
       const resultWorkedDaysEl = document.getElementById("result-worked-days");
       const resultWorkdaysMonthEl = document.getElementById("result-workdays-month");
       const resultTotalEl = document.getElementById("result-total");
@@ -464,9 +481,10 @@
         return format(d, "MMMM yyyy");
       }
 
-      function setResultRows(monthLabel, monthlyRate, workedDays, workdaysMonth, total) {
+      function setResultRows(monthLabel, monthlyRate, hourlyRate, workedDays, workdaysMonth, total) {
         resultMonthEl.textContent = monthLabel;
         resultMonthlyRateEl.textContent = monthlyRate;
+        resultHourlyRateEl.textContent = hourlyRate;
         resultWorkedDaysEl.textContent = workedDays;
         resultWorkdaysMonthEl.textContent = workdaysMonth;
         resultTotalEl.textContent = total;
@@ -480,35 +498,40 @@
 
         if (rate == null || rate < 0 || workdaysInMonth == null || workdaysInMonth === 0) {
           resultValueEl.textContent = "$ —";
-          setResultRows("—", "$ —", "—", workdaysInMonth != null ? workdaysInMonth : "—", "$ —");
+          setResultRows("—", "$ —", "$ —", "—", workdaysInMonth != null ? workdaysInMonth : "—", "$ —");
           return;
         }
 
-        let amount = 0;
+        let baseAmount = 0;
         let worked = 0;
+        const hourlyRate = rate / workdaysInMonth / 8;
+        const parsedHoursOff = parseFloat(hoursOffInput.value);
+        const hoursOff = isNaN(parsedHoursOff) || parsedHoursOff < 0 ? 0 : parsedHoursOff;
+        const deduction = hourlyRate * hoursOff;
 
         if (mode === "worked") {
           worked = parseFloat(workedDaysInput.value);
           if (isNaN(worked) || worked < 0) {
             resultValueEl.textContent = "$ —";
-            setResultRows(monthLabel, formatCurrency(rate), "—", workdaysInMonth, "$ —");
+            setResultRows(monthLabel, formatCurrency(rate), formatCurrency(hourlyRate), "—", workdaysInMonth, "$ —");
             return;
           }
           worked = Math.min(worked, workdaysInMonth);
-          amount = (rate / workdaysInMonth) * worked;
+          baseAmount = (rate / workdaysInMonth) * worked;
         } else {
           const timeoff = parseFloat(timeoffInput.value);
           if (isNaN(timeoff) || timeoff < 0) {
             resultValueEl.textContent = "$ —";
-            setResultRows(monthLabel, formatCurrency(rate), "—", workdaysInMonth, "$ —");
+            setResultRows(monthLabel, formatCurrency(rate), formatCurrency(hourlyRate), "—", workdaysInMonth, "$ —");
             return;
           }
           worked = Math.max(0, workdaysInMonth - timeoff);
-          amount = (rate / workdaysInMonth) * worked;
+          baseAmount = (rate / workdaysInMonth) * worked;
         }
 
+        const amount = Math.max(0, baseAmount - deduction);
         resultValueEl.textContent = formatCurrency(amount);
-        setResultRows(monthLabel, formatCurrency(rate), worked, workdaysInMonth, formatCurrency(amount));
+        setResultRows(monthLabel, formatCurrency(rate), formatCurrency(hourlyRate), worked, workdaysInMonth, formatCurrency(amount));
       }
 
       function toggleMode() {
@@ -543,6 +566,8 @@
       workedDaysInput.addEventListener("change", calculate);
       timeoffInput.addEventListener("input", calculate);
       timeoffInput.addEventListener("change", calculate);
+      hoursOffInput.addEventListener("input", calculate);
+      hoursOffInput.addEventListener("change", calculate);
 
       updateWorkdaysBadge();
       toggleMode();
